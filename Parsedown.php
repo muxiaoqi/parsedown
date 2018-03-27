@@ -135,6 +135,7 @@ class Parsedown
 
     protected $unmarkedBlockTypes = array(
         'Code',
+        'Emoji',
     );
 
     #
@@ -313,6 +314,29 @@ class Parsedown
     {
         return method_exists($this, 'block'.$Type.'Complete');
     }
+    
+    #
+    #emoji
+    protected function blockEmoji($Line, $Block = null){
+        if (isset($Block) and ! isset($Block['type']) and ! isset($Block['interrupted']))
+        {
+            return;
+        }
+        if (preg_match('/:((fa-([\w]+)(-(\w+)){0,})|(tw-([\w]+)-?(\w+)?)|([\w\+-]+)):/', $Line['text'])) {
+            $text = preg_replace('/:(fa-([\w]+)(-(\w+)){0,}):/', '<i class="fa fa-$2 fa-emoji" title="$1"></i>', $Line['text']);
+            $text = preg_replace('/:(tw-([\w]+)-?(\w+)?):/', '<img src="http://twemoji.maxcdn.com/36x36/$2.png" title="twemoji-1f004" alt="twemoji-1f004" class="emoji twemoji">', $text);
+            $text = preg_replace('/:([\w\+-]+):/', '<img src="https://www.webpagefx.com/tools/emoji-cheat-sheet/graphics/emojis/$1.png" class="emoji">', $text);
+
+            $Block = array(
+                'element' => array(
+                    'name' => 'p',
+                    'text' => $text,
+                ),
+            );
+
+            return $Block;
+        }
+    }
 
     #
     # Code
@@ -331,6 +355,9 @@ class Parsedown
             $Block = array(
                 'element' => array(
                     'name' => 'pre',
+                    'attributes' => [
+                       'class' => 'prettyprint linenums'
+                    ],
                     'handler' => 'element',
                     'text' => array(
                         'name' => 'code',
